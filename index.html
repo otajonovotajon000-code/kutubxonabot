@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shaxsiy Kutubxonam</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --primary: #18392F;
+      --primary-light: #245243;
+      --accent: #C5A46D;
+      --bg: #F7F4EC;
+      --card: #FFFFFF;
+      --text: #24342D;
+      --muted: #64748b;
+      --success: #16a34a;
+      --warning: #ca8a04;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 110px; }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 20px 16px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 4px 15px rgba(24, 57, 47, 0.2);
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .header-top h1 { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .user-pill {
+      background: rgba(197, 164, 109, 0.2);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+    .stat-card {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(197, 164, 109, 0.3);
+      backdrop-filter: blur(8px);
+      padding: 10px;
+      border-radius: 14px;
+      text-align: center;
+    }
+    .stat-card span { display: block; font-size: 11px; opacity: 0.85; margin-bottom: 4px; }
+    .stat-card strong { font-size: 16px; font-weight: 700; color: var(--accent); }
+
+    .controls-panel { padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 12px; }
+    
+    .tabs-wrapper { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .tab {
+      padding: 9px 18px;
+      border-radius: 20px;
+      background: #e6e2d8;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .tab.active { background: var(--primary); color: var(--accent); }
+
+    .sorting-wrapper { display: flex; gap: 8px; }
+    .sort-select {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid #cbd5e1;
+      background: var(--card);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+    .sort-select:focus { border-color: var(--primary); }
+
+    .book-list { padding: 8px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .book-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.03);
+      transition: transform 0.1s;
+    }
+    .book-card:active { transform: scale(0.98); }
+    .book-cover {
+      width: 68px;
+      height: 98px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .book-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .book-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .book-title { font-size: 17px; font-weight: 700; margin-bottom: 2px; color: var(--text); line-height: 1.3; }
+    .book-author { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .book-price { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    
+    .badge-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      user-select: none;
+    }
+    .badge.read { background: #dcfce7; color: var(--success); }
+    .badge.unread { background: #fef9c3; color: var(--warning); }
+    .edit-hint { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+    .dates {
+      padding-top: 8px;
+      border-top: 1px dashed #e2e8f0;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .date-row { display: flex; justify-content: space-between; }
+
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 30px;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(24, 57, 47, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 50;
+      transition: transform 0.2s;
+    }
+    .fab:active { transform: scale(0.95); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--card);
+      width: 100%;
+      max-width: 420px;
+      border-radius: 24px;
+      padding: 24px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h2 { font-size: 20px; color: var(--primary); font-weight: 700; }
+    .close-x { background: #e2e8f0; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text); cursor: pointer; }
+
+    .image-upload-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 16px;
+    }
+    .image-preview {
+      width: 64px;
+      height: 92px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .image-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .remove-img-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 12px;
+      cursor: pointer;
+      display: block;
+      font-weight: 500;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 15px;
+      background: #fff;
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .btn { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; font-size: 15px; }
+    .btn-cancel { background: #e2e8f0; color: var(--text); }
+    .btn-save { background: var(--primary); color: var(--accent); }
+    .btn-delete { background: #fee2e2; color: var(--danger); flex: 0.6; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 15px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <h1>📚 Kutubxonam</h1>
+      <div class="user-pill" id="currentUserBadge">👤 Yuklanmoqda...</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span>Jami kitob</span>
+        <strong id="totalCount">0 ta</strong>
+      </div>
+      <div class="stat-card">
+        <span>O'qilgan</span>
+        <strong id="readCount">0 ta</strong>
+      </div>
+      <div class="stat-card">
+        <span>Umumiy qiymat</span>
+        <strong id="totalPrice">0 so'm</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="controls-panel">
+    <div class="tabs-wrapper">
+      <button class="tab active" onclick="setFilter('all', this)">Barchasi</button>
+      <button class="tab" onclick="setFilter('unread', this)">O'qilmaganlar</button>
+      <button class="tab" onclick="setFilter('read', this)">O'qilganlar</button>
+    </div>
+
+    <div class="sorting-wrapper">
+      <select class="sort-select" id="priceSortSelect" onchange="applySorting()">
+        <option value="none">💰 Narx bo'yicha saralash</option>
+        <option value="asc">Arzondan qimmatga ↑</option>
+        <option value="desc">Qimmatdan arzonga ↓</option>
+      </select>
+      <select class="sort-select" id="dateSortSelect" onchange="applySorting()">
+        <option value="none">⏱ O'qish tezligi/vaqti</option>
+        <option value="fast">Tez o'qilganlar (Qisqa vaqt)</option>
+        <option value="slow">Ko'p vaqt talab qilganlar</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="book-list" id="bookList"></div>
+
+  <button class="fab" onclick="openAddModal()">+ Kitob qo'shish</button>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Yangi kitob qo'shish</h2>
+        <button class="close-x" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="image-upload-wrap">
+        <div class="image-preview" id="imagePreview">📷</div>
+        <div class="image-upload-controls">
+          <label class="upload-btn" for="bookImageInput">Muqova rasmini tanlash</label>
+          <input type="file" id="bookImageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+          <button type="button" class="remove-img-btn" id="removeImgBtn" style="display:none" onclick="removeImage()">Rasmni olib tashlash</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Kitob nomi *</label>
+        <input type="text" id="bookTitle" placeholder="Masalan: Atom odatlar">
+      </div>
+      <div class="form-group">
+        <label>Muallif</label>
+        <input type="text" id="bookAuthor" placeholder="Masalan: Jeyms Klir">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Narxi (so'm)</label>
+          <input type="number" id="bookPrice" placeholder="65000">
+        </div>
+        <div class="form-group">
+          <label>Holati</label>
+          <select id="bookStatus">
+            <option value="unread">O'qilmagan</option>
+            <option value="read">O'qilgan</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Boshlangan sana</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="form-group">
+          <label>Tugatilgan sana</label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-delete" id="deleteBtn" style="display:none" onclick="deleteCurrentBook()">O'chirish</button>
+        <button class="btn btn-cancel" onclick="closeModal()">Bekor qilish</button>
+        <button class="btn btn-save" onclick="saveBook()">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) tg.expand();
+
+    let currentUser;
+    const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : null;
+
+    if (tgUser && tgUser.id) {
+      currentUser = {
+        id: String(tgUser.id),
+        name: [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ") || "Kitobxon"
+      };
+    } else {
+      let savedBrowserId = localStorage.getItem('kitab_browser_unique_id_v3');
+      let savedBrowserName = localStorage.getItem('kitab_browser_name_v3');
+      if (!savedBrowserId) {
+        savedBrowserId = "web_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('kitab_browser_unique_id_v3', savedBrowserId);
+        savedBrowserName = "Kitobxon " + Math.floor(Math.random() * 900 + 100);
+        localStorage.setItem('kitab_browser_name_v3', savedBrowserName);
+      }
+      currentUser = { id: savedBrowserId, name: savedBrowserName };
+    }
+
+    document.getElementById('currentUserBadge').innerText = "👤 " + currentUser.name;
+
+    const STORAGE_KEY = 'my_personal_library_data_v3';
+    let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+    if (!userData[currentUser.id]) {
+      userData[currentUser.id] = { books: [] };
+    }
+
+    let currentFilter = 'all';
+    let editingBookId = null;
+    let currentImageBase64 = "";
+
+    function saveDatabase() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+    }
+
+    function getBooks() {
+      return userData[currentUser.id].books || [];
+    }
+
+    function calculateReadDuration(book) {
+      if (!book.startDate) return Infinity; 
+      const start = new Date(book.startDate).getTime();
+      const end = book.endDate ? new Date(book.endDate).getTime() : new Date().getTime();
+      return Math.max(0, end - start);
+    }
+
+    function sortAndFilterBooks() {
+      let books = getBooks();
+
+      // 1. Holati bo'yicha filtr
+      if (currentFilter === 'read') {
+        books = books.filter(b => b.status === 'read');
+      } else if (currentFilter === 'unread') {
+        books = books.filter(b => b.status === 'unread');
+      }
+
+      // 2. Narx bo'yicha saralash
+      const priceSort = document.getElementById('priceSortSelect').value;
+      if (priceSort === 'asc') {
+        books.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+      } else if (priceSort === 'desc') {
+        books.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+      }
+
+      // 3. O'qish tezligi/vaqti bo'yicha saralash
+      const dateSort = document.getElementById('dateSortSelect').value;
+      if (dateSort !== 'none') {
+        books.sort((a, b) => {
+          const durationA = calculateReadDuration(a);
+          const durationB = calculateReadDuration(b);
+          return dateSort === 'fast' ? durationA - durationB : durationB - durationA;
+        });
+      }
+
+      // 4. Oxirgi qoida: O'qilgan kitoblar doim pastga tushadi
+      books.sort((a, b) => {
+        if (a.status === 'read' && b.status !== 'read') return 1;
+        if (a.status !== 'read' && b.status === 'read') return -1;
+        return 0;
+      });
+
+      return books;
+    }
+
+    function applySorting() {
+      renderBooks();
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderBooks();
+    }
+
+    function renderBooks() {
+      const books = sortAndFilterBooks();
+      const list = document.getElementById('bookList');
+      list.innerHTML = '';
+
+      if (books.length === 0) {
+        list.innerHTML = '<div class="empty-state">Hozircha bu bo\'limda kitoblar yo\'q</div>';
+      }
+
+      books.forEach(book => {
+        const firstLetter = book.title ? book.title.charAt(0).toUpperCase() : 'K';
+        const isRead = book.status === 'read';
+        const coverContent = book.image
+          ? `<img src="${book.image}" alt="${book.title}">`
+          : firstLetter;
+
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.onclick = () => openEditModal(book.id);
+        card.innerHTML = `
+          <div class="book-cover">${coverContent}</div>
+          <div class="book-info">
+            <div class="book-title">${book.title}</div>
+            <div class="book-author">${book.author || 'Muallif kiritilmagan'}</div>
+            <div class="book-price">${Number(book.price || 0).toLocaleString('uz-UZ')} so'm</div>
+            <div class="badge-row">
+              <span class="badge ${isRead ? 'read' : 'unread'}">
+                ${isRead ? '✓ O\'qilgan' : '⏳ O\'qilmagan'}
+              </span>
+              <span class="edit-hint">✏️ Tahrirlash</span>
+            </div>
+            <div class="dates">
+              <div class="date-row">
+                <span>📅 Boshlandi:</span>
+                <b>${book.startDate || 'Kiritilmagan'}</b>
+              </div>
+              <div class="date-row">
+                <span>🏁 Tugatildi:</span>
+                <b>${book.endDate || '—'}</b>
+              </div>
+            </div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      const allBooks = getBooks();
+      document.getElementById('totalCount').innerText = allBooks.length + ' ta';
+      document.getElementById('readCount').innerText = allBooks.filter(b => b.status === 'read').length + ' ta';
+      const totalSum = allBooks.reduce((sum, b) => sum + Number(b.price || 0), 0);
+      document.getElementById('totalPrice').innerText = totalSum.toLocaleString('uz-UZ') + " so'm";
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxW = 240; const maxH = 340;
+          let w = img.width; let h = img.height;
+          if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
+          else { if (h > maxH) { w *= maxH / h; h = maxH; } }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          currentImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          updateImagePreview();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateImagePreview() {
+      const preview = document.getElementById('imagePreview');
+      const removeBtn = document.getElementById('removeImgBtn');
+      if (currentImageBase64) {
+        preview.innerHTML = `<img src="${currentImageBase64}" alt="Preview">`;
+        removeBtn.style.display = 'block';
+      } else {
+        preview.innerHTML = '📷';
+        removeBtn.style.display = 'none';
+      }
+    }
+
+    function removeImage() {
+      currentImageBase64 = "";
+      document.getElementById('bookImageInput').value = "";
+      updateImagePreview();
+    }
+
+    function openAddModal() {
+      editingBookId = null;
+      currentImageBase64 = "";
+      document.getElementById('modalTitle').innerText = "Yangi kitob qo'shish";
+      document.getElementById('bookTitle').value = '';
+      document.getElementById('bookAuthor').value = '';
+      document.getElementById('bookPrice').value = '';
+      document.getElementById('bookStatus').value = 'unread';
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
+      document.getElementById('bookImageInput').value = '';
+      document.getElementById('deleteBtn').style.display = 'none';
+      updateImagePreview();
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function openEditModal(id) {
+      const books = getBooks();
+      const book = books.find(b => b.id === id);
+      if (!book) return;
+      editingBookId = id;
+      currentImageBase64 = book.image || "";
+      document.getElementById('modalTitle').innerText = "Kitobni tahrirlash";
+      document.getElementById('bookTitle').value = book.title || '';
+      document.getElementById('bookAuthor').value = book.author || '';
+      document.getElementById('bookPrice').value = book.price || '';
+      document.getElementById('bookStatus').value = book.status || 'unread';
+      document.getElementById('startDate').value = book.startDate || '';
+      document.getElementById('endDate').value = book.endDate || '';
+      document.getElementById('bookImageInput').value = '';
+      document.getElementById('deleteBtn').style.display = 'block';
+      updateImagePreview();
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    function saveBook() {
+      const title = document.getElementById('bookTitle').value.trim();
+      const author = document.getElementById('bookAuthor').value.trim();
+      const price = document.getElementById('bookPrice').value;
+      const status = document.getElementById('bookStatus').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      if (!title) { alert("Iltimos, kitob nomini kiriting!"); return; }
+
+      let books = getBooks();
+
+      if (editingBookId !== null) {
+        books = books.map(b => b.id === editingBookId ? {
+          id: editingBookId, title, author, price: Number(price) || 0, status, startDate, endDate, image: currentImageBase64
+        } : b);
+      } else {
+        const newBook = {
+          id: Date.now(), title, author, price: Number(price) || 0, status, startDate, endDate, image: currentImageBase64
+        };
+        books.push(newBook);
+      }
+
+      userData[currentUser.id].books = books;
+      saveDatabase();
+      renderBooks();
+      closeModal();
+    }
+
+    function deleteCurrentBook() {
+      if (editingBookId === null) return;
+      if (confirm("Bu kitobni butunlay o'chirmoqchimisiz?")) {
+        userData[currentUser.id].books = getBooks().filter(b => b.id !== editingBookId);
+        saveDatabase();
+        renderBooks();
+        closeModal();
+      }
+    }
+
+    renderBooks();
+  </script>
+</body>
+</html>
